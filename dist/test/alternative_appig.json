@@ -1,0 +1,23 @@
+{
+  "options": {
+    "rootPath": "Alt_Resources",
+    "createContentsJson": true
+  },
+  "rules": {
+    "ios:app-icon": {
+      "sourceFile": "appIcon.png",
+      "images": [
+        {
+          "fileName": "AppIcon.png",
+          "targetPath": "iOS",
+          "size": "44x44"
+        },
+        {
+          "fileName": "AppIcon@2x.png",
+          "targetPath": ".",
+          "size": "44x44"
+        }
+      ]
+    }
+  }
+}

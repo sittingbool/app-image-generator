@@ -1,7 +1,70 @@
 //----------------------------------------------------------------------------------------------------------
 import * as fs from 'fs';
 import * as path from 'path';
+import {stringIsEmpty} from "sb-util-ts";
 //----------------------------------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------------------------------
+export interface IImageFileConfig
+//------------------------------------------------------------------------------------------------------
+{
+    fileName: string;
+    targetPath: string;
+    size: string;
+}
+
+
+//------------------------------------------------------------------------------------------------------
+export interface IGeneratorConfig
+//------------------------------------------------------------------------------------------------------
+{
+    rootPath?: string;
+    createContentsJson?: boolean; // if set to yes a contents.json like needed in ios will be created
+}
+
+
+//------------------------------------------------------------------------------------------------------
+export interface IGeneratorRule
+//------------------------------------------------------------------------------------------------------
+{
+    name?: string;
+    sourceFile: string; // absolute or relative path
+    images: IImageFileConfig[]
+}
+
+
+//------------------------------------------------------------------------------------------------------
+export class GeneratorRule implements IGeneratorRule
+//------------------------------------------------------------------------------------------------------
+{
+    name?: string = "";
+    sourceFile: string = null; // absolute or relative path
+    images: IImageFileConfig[] = [];
+
+    static withConfig(config: IGeneratorRule): GeneratorRule {
+        let instance = new this();
+
+        Object.keys(config).forEach( key => {
+            instance[key] = config[key];
+        });
+
+        if ( ! instance.images || !Array.isArray(instance.images) ) {
+            instance.images = [];
+        }
+
+        return instance;
+    }
+}
+
+
+//----------------------------------------------------------------------------------------------------------
+interface IConfigStructure
+//----------------------------------------------------------------------------------------------------------
+{
+    options: IGeneratorConfig;
+    rules: { [key: string]: IGeneratorRule };
+}
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -12,7 +75,7 @@ export class Configuration
     configPath: string = null;
     error: string = null;
 
-    private config: any;
+    private config: IConfigStructure;
     //------------------------------------------------------------------------------------------------------
 
     //------------------------------------------------------------------------------------------------------
@@ -51,14 +114,17 @@ export class Configuration
             return this.setError('No such directory: '+directory);
         }
 
-        stat = fs.lstatSync(directory);
+        try {
+            stat = fs.lstatSync(directory);
+        } catch (err) {
+            return this.setError(err.message);
+        }
 
         if ( !stat.isDirectory() ) {
             return this.setError('The path: '+directory + ' is not a directory');
         }
 
-        // FIXME: missing check for empty
-        if ( !fileName ) {
+        if ( !fileName || stringIsEmpty(fileName) ) {
             fileName = 'appig.json'
         }
 
@@ -72,7 +138,11 @@ export class Configuration
             }
         }
 
-        stat = fs.lstatSync(this.configPath);
+        try {
+            stat = fs.lstatSync(this.configPath);
+        } catch (err) {
+            return this.setError(err.message);
+        }
 
         if ( !stat.isFile() ) {
             return this.setError('The path: ' + this.configPath + ' is not a file');
@@ -100,13 +170,30 @@ export class Configuration
 
 
     //------------------------------------------------------------------------------------------------------
-    configForRule(rule: string): any[]
+    configForRule(rule: string): IGeneratorRule
     //------------------------------------------------------------------------------------------------------
     {
-        // FIXME: also return when rule string is empty
-        if ( this.error ) {
-            return [];
+        let defaultRule: GeneratorRule = new GeneratorRule();
+
+        if ( stringIsEmpty(rule) || this.error || !this.config.rules ||
+            typeof this.config.rules !== 'object' || typeof this.config.rules[rule] !== 'object' )
+        {
+            return defaultRule;
         }
-        return this.config[rule] || [];
+
+        return GeneratorRule.withConfig(this.config.rules[rule]) || defaultRule;
     }
+
+
+    //------------------------------------------------------------------------------------------------------
+    getGeneratorConfig(): IGeneratorConfig
+    //------------------------------------------------------------------------------------------------------
+    {
+        if ( this.error || !this.config.options || typeof this.config.options !== 'object' ) {
+            return {};
+        }
+
+        return this.config.options;
+    }
+
 }

@@ -5,7 +5,7 @@
 	"repository": "",
 	"license": "MIT",
 	"scripts": {
-		"clean": "rimraf dist",
+		"clean": "rimraf dist/src",
 		"build": "npm run clean && tsc --pretty",
 		"test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
 		"watch": "npm run build -- --watch",

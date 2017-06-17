@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const path = require("path");
 const sb_util_ts_1 = require("sb-util-ts");
+const base_controller_1 = require("./base-controller");
 class GeneratorRule {
     constructor() {
         this.name = "";
@@ -21,15 +22,13 @@ class GeneratorRule {
     }
 }
 exports.GeneratorRule = GeneratorRule;
-class Configuration {
+class Configuration extends base_controller_1.BaseController {
     constructor(directory, fileName) {
+        super();
         this.configPath = null;
         this.error = null;
         this.setupPath(directory, fileName);
         this.loadConfig();
-    }
-    setError(error) {
-        this.error = error;
     }
     setupPath(directory, fileName) {
         let stat;
@@ -74,7 +73,6 @@ class Configuration {
     }
     loadConfig() {
         if (this.error) {
-            console.error(this.error);
             return;
         }
         let fileData = fs.readFileSync(this.configPath, 'utf8');

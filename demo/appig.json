@@ -1,0 +1,38 @@
+{
+  "options": {
+    "rootPath": "demo/out",
+    "createContentsJson": true
+  },
+  "rules": {
+    "flower1": {
+      "sourceFile": "fl_portrait.jpg",
+      "images": [
+        {
+          "fileName": "fl_portrait4444.jpg",
+          "targetPath": "test",
+          "size": "44x44"
+        },
+        {
+          "fileName": "fl_portrait200100.png",
+          "targetPath": "test",
+          "size": "200x100"
+        }
+      ]
+    },
+    "flower2": {
+      "sourceFile": "fl_landscape.jpg",
+      "images": [
+        {
+          "fileName": "fl_landscape100200.jpg",
+          "targetPath": "test",
+          "size": "100x200"
+        },
+        {
+          "fileName": "fl_landscape200100.png",
+          "targetPath": "test",
+          "size": "200x100"
+        }
+      ]
+    }
+  }
+}

@@ -3,6 +3,7 @@ export interface IImageFileConfig {
     fileName: string;
     targetPath: string;
     size: string;
+    noCrop?: boolean;
 }
 export interface IGeneratorConfig {
     rootPath?: string;
@@ -21,11 +22,14 @@ export declare class GeneratorRule implements IGeneratorRule {
 }
 export declare class Configuration extends BaseController {
     configPath: string;
+    directory: string;
     error: string;
     private config;
     constructor(directory: string, fileName: string);
     setupPath(directory: string, fileName: string): void;
     loadConfig(): void;
     configForRule(rule: string): IGeneratorRule;
+    configForGenericRules(ruleBeginning: string): IGeneratorRule[];
+    configForAllRules(): IGeneratorRule[];
     getGeneratorConfig(): IGeneratorConfig;
 }

@@ -50,6 +50,7 @@ class Configuration extends base_controller_1.BaseController {
         if (!stat.isDirectory()) {
             return this.setError('The path: ' + directory + ' is not a directory');
         }
+        this.directory = directory;
         if (!fileName || sb_util_ts_1.stringIsEmpty(fileName)) {
             fileName = 'appig.json';
         }
@@ -90,6 +91,36 @@ class Configuration extends base_controller_1.BaseController {
             return defaultRule;
         }
         return GeneratorRule.withConfig(this.config.rules[rule]) || defaultRule;
+    }
+    configForGenericRules(ruleBeginning) {
+        let rules = [], keys;
+        if (sb_util_ts_1.stringIsEmpty(ruleBeginning) || this.error || !this.config.rules ||
+            typeof this.config.rules !== 'object') {
+            return rules;
+        }
+        if (ruleBeginning.endsWith('*')) {
+            ruleBeginning = ruleBeginning.substring(0, ruleBeginning.length - 1).trim();
+            if (sb_util_ts_1.stringIsEmpty(ruleBeginning)) {
+                return rules;
+            }
+        }
+        keys = Object.keys(this.config.rules).filter(item => {
+            return item.startsWith(ruleBeginning);
+        });
+        keys.forEach(item => {
+            rules.push(this.config.rules[item]);
+        });
+        return rules;
+    }
+    configForAllRules() {
+        let rules = [];
+        if (this.error || !this.config.rules || typeof this.config.rules !== 'object') {
+            return rules;
+        }
+        Object.keys(this.config.rules).forEach(key => {
+            rules.push(this.config.rules[key]);
+        });
+        return rules;
     }
     getGeneratorConfig() {
         if (this.error || !this.config.options || typeof this.config.options !== 'object') {

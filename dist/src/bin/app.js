@@ -14,7 +14,9 @@ class App {
             .description('An application for creating files from templates')
             .option('-c, --config-file [value]', 'Set configuration file name (without .json) default will be appig.json')
             .option('-r, --rule [value]', 'Will limit generation to one rule within the config file ' +
-            'if the name of the role is given here')
+            'if the name of the role is given here | ' +
+            'all will process all rules | ' +
+            '{keyword}:* will process all rules that start with {keyword}')
             .option('-t, --target [value]', 'Set target directory which is to top relative directory of ' +
             'each rule (./ is used as default)')
             .option('-d, --config-directory [value]', 'The directory containing the config files (./ is used as default)')
@@ -34,6 +36,12 @@ class App {
         if (this.generator.error) {
             return this.logError(this.generator.error);
         }
+        this.generator.generate(err => {
+            if (err) {
+                return this.logError(err);
+            }
+            console.log('DONE');
+        });
     }
     logError(err) {
         console.error(err);

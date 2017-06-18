@@ -9,7 +9,8 @@
 		"build": "npm run clean && tsc --pretty",
 		"test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
 		"watch": "npm run build -- --watch",
-		"watch:test": "npm run test -- --watch"
+		"watch:test": "npm run test -- --watch",
+		"demo": "bin/appig -d demo -r all"
 	},
 	"author": {
 		"name": "Richard Habermann",
@@ -43,6 +44,7 @@
 		"commander": "^2.9.0",
 		"gm": "^1.23.0",
 		"lodash": "^4.17.4",
+		"mkdirp": "^0.5.1",
 		"sb-util-ts": "^0.3.0"
 	}
 }

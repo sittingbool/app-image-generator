@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"declaration": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"sourceMap": true,
+		"experimentalDecorators": true,
+		"outDir": "dist",
+		"preserveConstEnums": true,
+		"removeComments": true,
+		"rootDirs": ["src", "test"]
+	},
+	"include": [
+		"src/**/*",
+		"test/**/*"
+	],
+	"exclude": [
+		"demo",
+		"node_modules",
+		"!node_modules/@types"
+	]
+}

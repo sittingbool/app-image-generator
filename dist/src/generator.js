@@ -6,6 +6,8 @@ const path = require("path");
 const fs = require("fs");
 const gm = require("gm");
 const mkdirp = require("mkdirp");
+const _ = require("lodash");
+const hex2rgb = require("hex-rgb");
 class Generator extends base_controller_1.BaseController {
     constructor(options) {
         super();
@@ -52,7 +54,9 @@ class Generator extends base_controller_1.BaseController {
         }
     }
     ruleIsValid(rule) {
-        return (rule && typeof rule === 'object' && !sb_util_ts_1.stringIsEmpty(rule.sourceFile) &&
+        return (rule && typeof rule === 'object' &&
+            (!sb_util_ts_1.stringIsEmpty(rule.sourceFile) ||
+                (Array.isArray(rule.sourceFiles) && rule.sourceFiles.length)) &&
             Array.isArray(rule.images) && rule.images.length > 0 && this.ruleImagesAreValid(rule.images));
     }
     ruleImagesAreValid(image) {
@@ -89,10 +93,23 @@ class Generator extends base_controller_1.BaseController {
         if (rule.images.length < 1) {
             return callback(null);
         }
+        if (rule.sourceFiles && Array.isArray(rule.sourceFiles) && rule.sourceFiles.length > 0) {
+            return this.generateImagesFromRuleWithManySources(rule, callback);
+        }
         image = rule.images.shift();
         original = path.join(this.configuration.directory, rule.sourceFile);
         target = path.join(this.target, image.targetPath, image.fileName);
-        process = new ImageProcess(original, target, image.size, image.noCrop);
+        if (!sb_util_ts_1.stringIsEmpty(rule._targetVar)) {
+            target = target.replace('{source}', rule._targetVar);
+        }
+        process = new ImageProcess({
+            original: original,
+            target: target,
+            size: image.size,
+            noCrop: image.noCrop,
+            fillColor: image.fillColor,
+            colorize: image.colorize
+        });
         process.run(err => {
             if (err) {
                 return callback(err);
@@ -100,44 +117,67 @@ class Generator extends base_controller_1.BaseController {
             this.generateImagesFromRule(rule, callback);
         });
     }
+    generateImagesFromRuleWithManySources(rule, callback) {
+        let sources = rule.sourceFiles, current, runner, images = rule.images;
+        rule.sourceFiles = null;
+        runner = () => {
+            let fileName;
+            if (sources.length < 1) {
+                return callback(null);
+            }
+            current = sources.shift();
+            rule.sourceFile = current;
+            fileName = path.basename(current);
+            fileName = fileName.replace(path.extname(current), '');
+            rule._targetVar = fileName;
+            rule.images = _.clone(images);
+            this.generateImagesFromRule(rule, (err) => {
+                if (err) {
+                    return callback(err);
+                }
+                runner();
+            });
+        };
+        runner();
+    }
 }
 exports.Generator = Generator;
 class ImageProcess {
-    constructor(original, target, size, noCrop = false) {
+    constructor(options) {
+        this.options = null;
+        this.optionalsUsed = false;
         let sizing;
-        this.original = original;
-        this.target = target;
-        this.noCrop = noCrop;
-        sizing = size.split('x');
+        sizing = options.size.split('x');
+        this.options = _.clone(options);
         this.width = parseInt(sizing[0]);
         this.height = parseInt(sizing[1]);
     }
     run(callback) {
         let dir;
-        if (!fs.existsSync(this.original)) {
-            return callback('No such file: ' + this.original);
+        if (!fs.existsSync(this.options.original)) {
+            return callback('No such file: ' + this.options.original);
         }
-        if (!fs.lstatSync(this.original).isFile()) {
-            return callback('Is not a file: ' + this.original);
+        if (!fs.lstatSync(this.options.original).isFile()) {
+            return callback('Is not a file: ' + this.options.original);
         }
-        dir = path.dirname(this.target);
+        dir = path.dirname(this.options.target);
         mkdirp(dir, (err) => {
             if (err) {
                 return callback(err.message);
             }
-            if (fs.existsSync(this.target)) {
-                fs.unlinkSync(this.target);
+            if (fs.existsSync(this.options.target)) {
+                fs.unlinkSync(this.options.target);
             }
-            if (this.noCrop) {
+            if (this.options.noCrop) {
                 return this.runWithOutCrop(callback);
             }
             this.runWithCrop(callback);
         });
     }
     runWithCrop(callback) {
-        let relativeWidth, relativeHeight;
-        console.log('Processing: ' + this.original + ' -> ' + this.target);
-        gm(this.original)
+        let relativeWidth, relativeHeight, process;
+        console.log('Processing: ' + this.options.original + ' -> ' + this.options.target);
+        gm(this.options.original)
             .size((err, size) => {
             if (err) {
                 return callback(err.message);
@@ -169,22 +209,55 @@ class ImageProcess {
             if (relativeWidth > size.width || relativeHeight > size.height) {
                 return callback('Relative sizes miscalculation');
             }
-            gm(this.original)
+            process = gm(this.options.original)
                 .gravity('Center')
-                .crop('' + relativeWidth, '' + relativeHeight)
-                .resize('' + this.width, '' + this.height)
-                .write(this.target, function (err) {
-                if (err) {
-                    return callback(err.message);
-                }
-                callback(null);
-            });
+                .crop('' + relativeWidth, '' + relativeHeight);
+            this.runDefaults(process, callback);
         });
     }
     runWithOutCrop(callback) {
-        gm(this.original)
-            .resize('' + this.width, '' + this.height)
-            .write(this.target, function (err) {
+        this.runDefaults(gm(this.options.original), callback);
+    }
+    runDefaults(process, callback) {
+        process = this.runResize(process);
+        this.runWrite(process, (err) => {
+            if (err) {
+                return callback(err);
+            }
+            process = gm(this.options.target);
+            this.runOptionals(process);
+            if (!this.optionalsUsed) {
+                return callback(null);
+            }
+            this.runWrite(process, callback);
+        });
+    }
+    runResize(process) {
+        return process.resize('' + this.width, '' + this.height);
+    }
+    runOptionals(process) {
+        let rgbColor;
+        if (!sb_util_ts_1.stringIsEmpty(this.options.fillColor)) {
+            rgbColor = hex2rgb(this.options.fillColor);
+            if (!sb_util_ts_1.arrayIsEmpty(rgbColor) && rgbColor.length === 3) {
+                process = process.options({ imageMagick: true })
+                    .fill(this.options.fillColor)
+                    .colorize(100);
+                this.optionalsUsed = true;
+            }
+        }
+        if (!sb_util_ts_1.stringIsEmpty(this.options.colorize)) {
+            rgbColor = hex2rgb(this.options.colorize);
+            if (!sb_util_ts_1.arrayIsEmpty(rgbColor) && rgbColor.length === 3) {
+                process = process.options({ imageMagick: true })
+                    .colorize(rgbColor[0], rgbColor[1], rgbColor[2]);
+                this.optionalsUsed = true;
+            }
+        }
+        return process;
+    }
+    runWrite(process, callback) {
+        process.write(this.options.target, function (err) {
             if (err) {
                 return callback(err.message);
             }

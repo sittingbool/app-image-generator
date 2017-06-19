@@ -5,6 +5,15 @@ export interface IGeneratorRunOptions {
     target?: string;
     rule: string;
 }
+export interface IImageProcessOptions {
+    original: string;
+    target: string;
+    size: string;
+    noCrop?: boolean;
+    createContentsJson?: boolean;
+    colorize?: string;
+    fillColor?: string;
+}
 export declare class Generator extends BaseController {
     configuration: Configuration;
     rules: IGeneratorRule[];
@@ -15,4 +24,5 @@ export declare class Generator extends BaseController {
     private ruleImagesAreValid(image);
     generate(callback: (err: string) => void): void;
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void): void;
+    generateImagesFromRuleWithManySources(rule: IGeneratorRule, callback: (err: string) => void): void;
 }

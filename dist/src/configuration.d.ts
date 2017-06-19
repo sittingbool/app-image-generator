@@ -4,6 +4,8 @@ export interface IImageFileConfig {
     targetPath: string;
     size: string;
     noCrop?: boolean;
+    colorize?: string;
+    fillColor?: string;
 }
 export interface IGeneratorConfig {
     rootPath?: string;
@@ -11,8 +13,10 @@ export interface IGeneratorConfig {
 }
 export interface IGeneratorRule {
     name?: string;
-    sourceFile: string;
+    sourceFile?: string;
+    sourceFiles?: string[];
     images: IImageFileConfig[];
+    _targetVar?: string;
 }
 export declare class GeneratorRule implements IGeneratorRule {
     name?: string;

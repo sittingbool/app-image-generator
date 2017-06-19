@@ -14,6 +14,9 @@ export interface IImageFileConfig
     targetPath: string;
     size: string;
     noCrop?: boolean; // prevents image from being cropped
+
+    colorize?: string; // define a color that should be rendered into the picture as a hex-value
+    fillColor?: string; // define a color that should be filled onto the picture as a hex-value
 }
 
 
@@ -31,8 +34,11 @@ export interface IGeneratorRule
 //------------------------------------------------------------------------------------------------------
 {
     name?: string;
-    sourceFile: string; // absolute or relative path
+    sourceFile?: string; // absolute or relative path
+    sourceFiles?: string [];
     images: IImageFileConfig[]
+
+    _targetVar?: string; //used internally to replace wildcard parameters with the source file name
 }
 
 

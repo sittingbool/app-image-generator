@@ -1,21 +1,21 @@
 {
 	"name": "app-image-generator",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "",
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/sittingbool/app-image-generator.git"
-    },
-    "keywords": [
-      "generator",
-      "app",
-      "image",
-      "automation"
-    ],
-    "bugs": {
-      "url": "https://github.com/sittingbool/app-image-generator/issues"
-    },
-    "homepage": "https://github.com/sittingbool/app-image-generator#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sittingbool/app-image-generator.git"
+	},
+	"keywords": [
+		"generator",
+		"app",
+		"image",
+		"automation"
+	],
+	"bugs": {
+		"url": "https://github.com/sittingbool/app-image-generator/issues"
+	},
+	"homepage": "https://github.com/sittingbool/app-image-generator#readme",
 	"license": "MIT",
 	"scripts": {
 		"clean": "rimraf dist/src",
@@ -56,6 +56,7 @@
 	"dependencies": {
 		"commander": "^2.9.0",
 		"gm": "^1.23.0",
+		"hex-rgb": "^1.0.0",
 		"lodash": "^4.17.4",
 		"mkdirp": "^0.5.1",
 		"sb-util-ts": "^0.3.0"

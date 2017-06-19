@@ -33,6 +33,57 @@
           "size": "200x100"
         }
       ]
+    },
+    "flower_many": {
+      "sourceFiles": [
+        "fl_portrait.jpg",
+        "fl_landscape.jpg"
+      ],
+      "images": [
+        {
+          "fileName": "{source}100100.jpg",
+          "targetPath": "test",
+          "size": "100x100"
+        },
+        {
+          "fileName": "{source}200200.png",
+          "targetPath": "test",
+          "size": "200x200"
+        }
+      ]
+    },
+    "flower_color": {
+      "sourceFile": "fl_grayscale.jpg",
+      "sourceFiles": [
+        "fl_portrait.jpg",
+        "fl_grayscale.jpg"
+      ],
+      "images": [
+        {
+          "fileName": "{source}100100_red.jpg",
+          "colorize": "#ff0000",
+          "targetPath": "test",
+          "size": "400x350"
+        }
+      ]
+    },
+    "ic_color": {
+      "sourceFiles": [
+        "ic_house.png"
+      ],
+      "images": [
+        {
+          "fileName": "ic_house50.png",
+          "targetPath": "test",
+          "size": "50x50"
+        },
+        {
+          "fileName": "ic_house_green50.png",
+          "targetPath": "test",
+          "size": "50x50",
+          "fillColor": "#00ff00"
+        }
+      ]
     }
   }
 }

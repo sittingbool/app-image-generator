@@ -2,20 +2,20 @@
 	"name": "app-image-generator",
 	"version": "0.1.0",
 	"description": "",
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/sittingbool/app-image-generator.git"
-    },
-    "keywords": [
-      "generator",
-      "app",
-      "image",
-      "automation"
-    ],
-    "bugs": {
-      "url": "https://github.com/sittingbool/app-image-generator/issues"
-    },
-    "homepage": "https://github.com/sittingbool/app-image-generator#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sittingbool/app-image-generator.git"
+	},
+	"keywords": [
+		"generator",
+		"app",
+		"image",
+		"automation"
+	],
+	"bugs": {
+		"url": "https://github.com/sittingbool/app-image-generator/issues"
+	},
+	"homepage": "https://github.com/sittingbool/app-image-generator#readme",
 	"license": "MIT",
 	"scripts": {
 		"clean": "rimraf dist/src",

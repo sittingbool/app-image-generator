@@ -1,4 +1,4 @@
-import { Configuration, IGeneratorRule } from "./configuration";
+import { Configuration, IComposeOptions, IGeneratorRule } from "./configuration";
 import { BaseController } from "./base-controller";
 export interface IGeneratorRunOptions {
     config: Configuration;
@@ -13,6 +13,7 @@ export interface IImageProcessOptions {
     createContentsJson?: boolean;
     colorize?: string;
     fillColor?: string;
+    compose?: IComposeOptions;
 }
 export declare class Generator extends BaseController {
     configuration: Configuration;

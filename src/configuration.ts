@@ -17,6 +17,8 @@ export interface IImageFileConfig
 
     colorize?: string; // define a color that should be rendered into the picture as a hex-value
     fillColor?: string; // define a color that should be filled onto the picture as a hex-value
+
+    replaceInTargetName?: { [key: string]: string };
 }
 
 

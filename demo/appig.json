@@ -82,6 +82,14 @@
           "targetPath": "test",
           "size": "50x50",
           "fillColor": "#00ff00"
+        },
+        {
+          "fileName": "ic_house50.png",
+          "targetPath": "test",
+          "replaceInTargetName": {
+            "_house": "_renamed"
+          },
+          "size": "50x50"
         }
       ]
     }

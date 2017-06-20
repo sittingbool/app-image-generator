@@ -1,4 +1,4 @@
-import { Configuration, IGeneratorRule } from "./configuration";
+import { Configuration, IComposeOptions, IGeneratorRule } from "./configuration";
 import { BaseController } from "./base-controller";
 export interface IGeneratorRunOptions {
     config: Configuration;
@@ -13,6 +13,7 @@ export interface IImageProcessOptions {
     createContentsJson?: boolean;
     colorize?: string;
     fillColor?: string;
+    compose?: IComposeOptions;
 }
 export declare class Generator extends BaseController {
     configuration: Configuration;
@@ -24,6 +25,9 @@ export declare class Generator extends BaseController {
     private ruleImagesAreValid(image);
     generate(callback: (err: string) => void): void;
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void): void;
+    protected applyReplacementsInTargetName(targetName: string, replacements?: {
+        [key: string]: string;
+    }): string;
     protected generateImageWithOptions(options: IImageProcessOptions, rule: IGeneratorRule, callback: (err: string) => void): void;
     generateImagesFromRuleWithManySources(rule: IGeneratorRule, callback: (err: string) => void): void;
 }

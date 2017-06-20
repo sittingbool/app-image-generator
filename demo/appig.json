@@ -67,6 +67,40 @@
         }
       ]
     },
+    "flower_compose": {
+      "sourceFile": "fl_portrait.jpg",
+      "images": [
+        {
+          "fileName": "fl_portrait_composed.jpg",
+          "targetPath": "test",
+          "size": "400x350",
+          "compose": {
+            "composeImage": "fl_landscape.jpg",
+            "size": "200x118",
+            "offsetX": 10,
+            "offsetY": 20
+          }
+        },
+        {
+          "fileName": "fl_portrait_composed_without_size.jpg",
+          "targetPath": "test",
+          "size": "400x350",
+          "compose": {
+            "composeImage": "fl_landscape.jpg",
+            "offsetX": 80,
+            "offsetY": 100
+          }
+        },
+        {
+          "fileName": "fl_portrait_composed_without_geometry.jpg",
+          "targetPath": "test",
+          "size": "400x350",
+          "compose": {
+            "composeImage": "out/test/fl_landscape100100.jpg"
+          }
+        }
+      ]
+    },
     "ic_color": {
       "sourceFiles": [
         "ic_house.png"

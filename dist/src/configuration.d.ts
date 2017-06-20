@@ -1,4 +1,12 @@
 import { BaseController } from "./base-controller";
+export declare type ComposeLevel = 'top' | 'below';
+export interface IComposeOptions {
+    composeImage: string;
+    topOrBelow: ComposeLevel;
+    size?: string;
+    offsetX?: number;
+    offsetY?: number;
+}
 export interface IImageFileConfig {
     fileName: string;
     targetPath: string;
@@ -6,6 +14,7 @@ export interface IImageFileConfig {
     noCrop?: boolean;
     colorize?: string;
     fillColor?: string;
+    compose?: IComposeOptions;
     replaceInTargetName?: {
         [key: string]: string;
     };

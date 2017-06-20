@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------------
-import {Configuration, IGeneratorRule, IImageFileConfig} from "./configuration";
+import {Configuration, IComposeOptions, IGeneratorRule, IImageFileConfig} from "./configuration";
 import {arrayIsEmpty, stringIsEmpty} from "sb-util-ts";
 import {BaseController} from "./base-controller";
 import * as path from "path";
@@ -8,6 +8,13 @@ import * as gm from "gm";
 import * as mkdirp from "mkdirp";
 import * as _ from "lodash";
 import * as hex2rgb from "hex-rgb";
+//----------------------------------------------------------------------------------------------------------
+
+
+
+//----------------------------------------------------------------------------------------------------------
+// to test if size has right format e.g. 220x440
+const sizeRegex = /^([0-9])+x([0-9])+$/;
 //----------------------------------------------------------------------------------------------------------
 
 
@@ -33,6 +40,8 @@ export interface IImageProcessOptions
     createContentsJson?: boolean; // determines if a contents.json for Apple should be created
     colorize?: string; // calculated color shift
     fillColor?: string; // color to be filled on any pixel that is not transparent
+
+    compose?: IComposeOptions; // add a second image as composition
 }
 
 
@@ -93,7 +102,7 @@ export class Generator extends BaseController
 
         if ( this.rules.length < 1 ) {
             return this.setError(
-                'No valid rule found for ' + options.rule + ', please check configuration');
+                'Invalid rule found for ' + options.rule + ', please check configuration');
         }
 
         rootPath = this.configuration.getGeneratorConfig().rootPath;
@@ -144,7 +153,9 @@ export class Generator extends BaseController
     private ruleImagesAreValid(image: IImageFileConfig | IImageFileConfig[] ): boolean
     //------------------------------------------------------------------------------------------------------
     {
-        let i, current;
+        let i, current, valid, compose: IComposeOptions;
+
+        // if array of images, test each one of them
         if ( Array.isArray(image) ) {
             for ( i = 0; i < image.length; i++ ) {
                 current = image[i];
@@ -154,11 +165,30 @@ export class Generator extends BaseController
             }
             return true;
         }
-        return ( image && typeof image === 'object' && !stringIsEmpty(image.targetPath) &&
-            !stringIsEmpty(image.size) &&
-            // size has right format e.g. 220x440
-            /^([0-9])+x([0-9])+$/.test(image.size) &&
-            !stringIsEmpty(image.fileName) );
+
+        // must have necessary properties in the right type
+        valid = ( image && typeof image === 'object' && !stringIsEmpty(image.targetPath) &&
+            !stringIsEmpty(image.size) && sizeRegex.test(image.size) && !stringIsEmpty(image.fileName) );
+
+        if ( !valid ) {
+            console.log('validation error in image rule for image named "' +
+                (image.targetPath || 'name missing' ) + '"' );
+        }
+
+        // if has image.compose option set then it mus be valid
+        if ( valid && image.compose && typeof image.compose === 'object' ) {
+            compose = image.compose;
+
+            valid = ( !stringIsEmpty(compose.composeImage) &&
+            ( stringIsEmpty(compose.size) || sizeRegex.test(compose.size) ) );
+        }
+
+        if ( !valid ) {
+            console.log('validation error in image compose rule for image named "' +
+                (image.targetPath || 'name missing' ) + '"' );
+        }
+
+        return valid;
     }
 
 
@@ -196,7 +226,7 @@ export class Generator extends BaseController
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
-        let image: IImageFileConfig, process: ImageProcess, original, target, fileName;
+        let image: IImageFileConfig, original, target;
 
         if ( rule.images.length < 1 ) {
             return callback(null);
@@ -210,22 +240,13 @@ export class Generator extends BaseController
 
         original = path.join(this.configuration.directory, rule.sourceFile);
 
-        fileName = image.fileName;
-
-        if ( image.replaceInTargetName  && typeof image.replaceInTargetName === 'object' ) {
-            Object.keys(image.replaceInTargetName).forEach(search => {
-                let val = image.replaceInTargetName[search];
-                if ( typeof val === 'string' ) {
-                    fileName = fileName.replace(search, val);
-                }
-            });
-        }
-
-        target = path.join(this.target, image.targetPath, fileName);
+        target = path.join(this.target, image.targetPath, image.fileName);
 
         if ( !stringIsEmpty(rule._targetVar) ) {
             target = target.replace('{source}', rule._targetVar);
         }
+
+        target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
 
         this.generateImageWithOptions({
             original: original,
@@ -233,8 +254,34 @@ export class Generator extends BaseController
             size: image.size,
             noCrop: image.noCrop,
             fillColor: image.fillColor,
-            colorize: image.colorize
+            colorize: image.colorize,
+            compose: image.compose
         }, rule, callback);
+    }
+
+
+    //------------------------------------------------------------------------------------------------------
+    /**
+     * replaces an object of key value pairs into the target path name where the key is the current
+     * and the value is the new substring
+     * @param targetName - the string that the replacement should be done in
+     * @param replacements - the key - value - paring for the parts to replace
+     * @return {string} - the resulting string
+     */
+    protected applyReplacementsInTargetName(targetName:string,
+                                            replacements?: {[key: string]: string}): string
+    //------------------------------------------------------------------------------------------------------
+    {
+        if ( replacements  && typeof replacements === 'object' ) {
+            Object.keys(replacements).forEach(search => {
+                let val = replacements[search];
+                if ( typeof val === 'string' ) {
+                    targetName = targetName.replace(search, val);
+                }
+            });
+        }
+
+        return targetName;
     }
 
 
@@ -273,7 +320,7 @@ export class Generator extends BaseController
     {
         let sources = rule.sourceFiles, current, runner, images = rule.images;
 
-        rule.sourceFiles = null; // prevent cutting out in single source generation
+        rule.sourceFiles = null; // prevent opting out in single source generation
 
         runner = () => {
 
@@ -519,6 +566,61 @@ class ImageProcess
                     .colorize(rgbColor[0], rgbColor[1], rgbColor[2]);
                 this.optionalsUsed = true;
             }
+        }
+
+        if ( this.options.compose && typeof this.options.compose === 'object' ) {
+            process = this.compose(process, this.options.compose);
+            this.optionalsUsed = true;
+        }
+
+        return process;
+    }
+    
+    
+    //------------------------------------------------------------------------------------------------------
+    /**
+     * adds optional image composition to the image
+     * @param process - the gm process to be used as basis
+     * @param options - IComposeOptions for this composition
+     * @return {any} - altered gm process
+     */
+    compose(process: any, options: IComposeOptions): any
+    //------------------------------------------------------------------------------------------------------
+    {
+        let geometry = "", composePath;
+
+        let directionForValue = (value) => {
+            if ( value >= 0) {
+                return '+';
+            }
+            return '-';
+        };
+
+        composePath = path.join(path.dirname(this.options.original), options.composeImage);
+
+        if ( !fs.existsSync(composePath) ) {
+            console.log("Cannot find path " + composePath +
+                " to compose with " + this.options.original + ", so skipping it.");
+
+            return process;
+        }
+
+        if ( ! stringIsEmpty( options.size) ) {
+            geometry += options.size;
+        }
+
+        if ( typeof options.offsetX === 'number' ) {
+            geometry += directionForValue(options.offsetX) + options.offsetX;
+        }
+
+        if ( typeof options.offsetY === 'number' ) {
+            geometry += directionForValue(options.offsetY) + options.offsetY;
+        }
+
+        process = process.composite(composePath);
+
+        if ( !stringIsEmpty(geometry) ) {
+            process = process.geometry(geometry);
         }
 
         return process;

@@ -8,6 +8,7 @@ const gm = require("gm");
 const mkdirp = require("mkdirp");
 const _ = require("lodash");
 const hex2rgb = require("hex-rgb");
+const sizeRegex = /^([0-9])+x([0-9])+$/;
 class Generator extends base_controller_1.BaseController {
     constructor(options) {
         super();
@@ -32,7 +33,7 @@ class Generator extends base_controller_1.BaseController {
             return this.ruleIsValid(item);
         });
         if (this.rules.length < 1) {
-            return this.setError('No valid rule found for ' + options.rule + ', please check configuration');
+            return this.setError('Invalid rule found for ' + options.rule + ', please check configuration');
         }
         rootPath = this.configuration.getGeneratorConfig().rootPath;
         if (!sb_util_ts_1.stringIsEmpty(rootPath)) {
@@ -60,7 +61,7 @@ class Generator extends base_controller_1.BaseController {
             Array.isArray(rule.images) && rule.images.length > 0 && this.ruleImagesAreValid(rule.images));
     }
     ruleImagesAreValid(image) {
-        let i, current;
+        let i, current, valid, compose;
         if (Array.isArray(image)) {
             for (i = 0; i < image.length; i++) {
                 current = image[i];
@@ -70,10 +71,22 @@ class Generator extends base_controller_1.BaseController {
             }
             return true;
         }
-        return (image && typeof image === 'object' && !sb_util_ts_1.stringIsEmpty(image.targetPath) &&
-            !sb_util_ts_1.stringIsEmpty(image.size) &&
-            /^([0-9])+x([0-9])+$/.test(image.size) &&
-            !sb_util_ts_1.stringIsEmpty(image.fileName));
+        valid = (image && typeof image === 'object' && !sb_util_ts_1.stringIsEmpty(image.targetPath) &&
+            !sb_util_ts_1.stringIsEmpty(image.size) && sizeRegex.test(image.size) && !sb_util_ts_1.stringIsEmpty(image.fileName));
+        if (!valid) {
+            console.log('validation error in image rule for image named "' +
+                (image.targetPath || 'name missing') + '"');
+        }
+        if (valid && image.compose && typeof image.compose === 'object') {
+            compose = image.compose;
+            valid = (!sb_util_ts_1.stringIsEmpty(compose.composeImage) &&
+                (sb_util_ts_1.stringIsEmpty(compose.size) || sizeRegex.test(compose.size)));
+        }
+        if (!valid) {
+            console.log('validation error in image compose rule for image named "' +
+                (image.targetPath || 'name missing') + '"');
+        }
+        return valid;
     }
     generate(callback) {
         let rule;
@@ -89,7 +102,7 @@ class Generator extends base_controller_1.BaseController {
         });
     }
     generateImagesFromRule(rule, callback) {
-        let image, process, original, target, fileName;
+        let image, original, target;
         if (rule.images.length < 1) {
             return callback(null);
         }
@@ -98,27 +111,31 @@ class Generator extends base_controller_1.BaseController {
         }
         image = rule.images.shift();
         original = path.join(this.configuration.directory, rule.sourceFile);
-        fileName = image.fileName;
-        if (image.replaceInTargetName && typeof image.replaceInTargetName === 'object') {
-            Object.keys(image.replaceInTargetName).forEach(search => {
-                let val = image.replaceInTargetName[search];
-                if (typeof val === 'string') {
-                    fileName = fileName.replace(search, val);
-                }
-            });
-        }
-        target = path.join(this.target, image.targetPath, fileName);
+        target = path.join(this.target, image.targetPath, image.fileName);
         if (!sb_util_ts_1.stringIsEmpty(rule._targetVar)) {
             target = target.replace('{source}', rule._targetVar);
         }
+        target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
         this.generateImageWithOptions({
             original: original,
             target: target,
             size: image.size,
             noCrop: image.noCrop,
             fillColor: image.fillColor,
-            colorize: image.colorize
+            colorize: image.colorize,
+            compose: image.compose
         }, rule, callback);
+    }
+    applyReplacementsInTargetName(targetName, replacements) {
+        if (replacements && typeof replacements === 'object') {
+            Object.keys(replacements).forEach(search => {
+                let val = replacements[search];
+                if (typeof val === 'string') {
+                    targetName = targetName.replace(search, val);
+                }
+            });
+        }
+        return targetName;
     }
     generateImageWithOptions(options, rule, callback) {
         let process = new ImageProcess(options);
@@ -265,6 +282,39 @@ class ImageProcess {
                     .colorize(rgbColor[0], rgbColor[1], rgbColor[2]);
                 this.optionalsUsed = true;
             }
+        }
+        if (this.options.compose && typeof this.options.compose === 'object') {
+            process = this.compose(process, this.options.compose);
+            this.optionalsUsed = true;
+        }
+        return process;
+    }
+    compose(process, options) {
+        let geometry = "", composePath;
+        let directionForValue = (value) => {
+            if (value >= 0) {
+                return '+';
+            }
+            return '-';
+        };
+        composePath = path.join(path.dirname(this.options.original), options.composeImage);
+        if (!fs.existsSync(composePath)) {
+            console.log("Cannot find path " + composePath +
+                " to compose with " + this.options.original + ", so skipping it.");
+            return process;
+        }
+        if (!sb_util_ts_1.stringIsEmpty(options.size)) {
+            geometry += options.size;
+        }
+        if (typeof options.offsetX === 'number') {
+            geometry += directionForValue(options.offsetX) + options.offsetX;
+        }
+        if (typeof options.offsetY === 'number') {
+            geometry += directionForValue(options.offsetY) + options.offsetY;
+        }
+        process = process.composite(composePath);
+        if (!sb_util_ts_1.stringIsEmpty(geometry)) {
+            process = process.geometry(geometry);
         }
         return process;
     }

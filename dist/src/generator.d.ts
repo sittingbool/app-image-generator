@@ -19,10 +19,11 @@ export declare class Generator extends BaseController {
     rules: IGeneratorRule[];
     target: string;
     constructor(options: IGeneratorRunOptions);
-    setupWithOptions(options: IGeneratorRunOptions): void;
+    protected setupWithOptions(options: IGeneratorRunOptions): void;
     private ruleIsValid(rule);
     private ruleImagesAreValid(image);
     generate(callback: (err: string) => void): void;
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void): void;
+    protected generateImageWithOptions(options: IImageProcessOptions, rule: IGeneratorRule, callback: (err: string) => void): void;
     generateImagesFromRuleWithManySources(rule: IGeneratorRule, callback: (err: string) => void): void;
 }

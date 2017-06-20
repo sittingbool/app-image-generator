@@ -6,6 +6,9 @@ export interface IImageFileConfig {
     noCrop?: boolean;
     colorize?: string;
     fillColor?: string;
+    replaceInTargetName?: {
+        [key: string]: string;
+    };
 }
 export interface IGeneratorConfig {
     rootPath?: string;

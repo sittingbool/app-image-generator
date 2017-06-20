@@ -30,9 +30,9 @@ export interface IImageProcessOptions
     target: string;
     size: string;
     noCrop?: boolean;
-    createContentsJson?: boolean;
-    colorize?: string;
-    fillColor?: string;
+    createContentsJson?: boolean; // determines if a contents.json for Apple should be created
+    colorize?: string; // calculated color shift
+    fillColor?: string; // color to be filled on any pixel that is not transparent
 }
 
 
@@ -59,7 +59,12 @@ export class Generator extends BaseController
 
 
     //------------------------------------------------------------------------------------------------------
-    setupWithOptions( options: IGeneratorRunOptions)
+    /**
+     * setup method to be called to set options for this generator instance
+     * @param options
+     * @return {undefined}
+     */
+    protected setupWithOptions( options: IGeneratorRunOptions)
     //------------------------------------------------------------------------------------------------------
     {
         let rootPath;
@@ -191,7 +196,7 @@ export class Generator extends BaseController
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
-        let image: IImageFileConfig, process: ImageProcess, original, target;
+        let image: IImageFileConfig, process: ImageProcess, original, target, fileName;
 
         if ( rule.images.length < 1 ) {
             return callback(null);
@@ -205,20 +210,48 @@ export class Generator extends BaseController
 
         original = path.join(this.configuration.directory, rule.sourceFile);
 
-        target = path.join(this.target, image.targetPath, image.fileName);
+        fileName = image.fileName;
+
+        if ( image.replaceInTargetName  && typeof image.replaceInTargetName === 'object' ) {
+            Object.keys(image.replaceInTargetName).forEach(search => {
+                let val = image.replaceInTargetName[search];
+                if ( typeof val === 'string' ) {
+                    fileName = fileName.replace(search, val);
+                }
+            });
+        }
+
+        target = path.join(this.target, image.targetPath, fileName);
 
         if ( !stringIsEmpty(rule._targetVar) ) {
             target = target.replace('{source}', rule._targetVar);
         }
 
-        process = new ImageProcess({
-            original:original,
-            target:target,
-            size:image.size,
+        this.generateImageWithOptions({
+            original: original,
+            target: target,
+            size: image.size,
             noCrop: image.noCrop,
             fillColor: image.fillColor,
             colorize: image.colorize
-        });
+        }, rule, callback);
+    }
+
+
+
+    //------------------------------------------------------------------------------------------------------
+    // can be overridden e.g. for test or subclass purposes which use a different class as ImageProcess
+    /**
+     * generate a single image by options that have been processed before
+     * @param options - IImageProcessOptions to generate the image
+     * @param rule - IGeneratorRule currently used
+     * @param callback - callback for finalizing
+     */
+    protected generateImageWithOptions(options: IImageProcessOptions, rule: IGeneratorRule,
+                                       callback: (err: string) => void)
+    //------------------------------------------------------------------------------------------------------
+    {
+        let process = new ImageProcess(options);
 
         process.run(err => {
             if ( err ) {
@@ -303,6 +336,10 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * public run method to start the process
+     * @param callback - default callback
+     */
     run(callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
@@ -338,6 +375,10 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * crop, run optional alterations and resize
+     * @param callback - default callback
+     */
     protected runWithCrop(callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
@@ -395,6 +436,10 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * run without crop. only run optional alterations, resize
+     * @param callback
+     */
     protected runWithOutCrop(callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
@@ -403,6 +448,11 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * run default processes (resize, optional alterations)
+     * @param process - gm process that was defined before
+     * @param callback - default callback
+     */
     protected runDefaults(process: any, callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
@@ -427,6 +477,11 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * adds resize setting to gm process
+     * @param process - gm process that was defined before
+     * @return {any} - altered gm process
+     */
     protected runResize(process: any): any
     //------------------------------------------------------------------------------------------------------
     {
@@ -435,6 +490,11 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * adds optional settings to gm process
+     * @param process - gm process that was defined before
+     * @return {any} - altered gm process
+     */
     protected runOptionals(process: any): any
     //------------------------------------------------------------------------------------------------------
     {
@@ -466,6 +526,11 @@ class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
+    /**
+     * executes write to file
+     * @param process - gm process that was defined before and should be executed
+     * @param callback - default callback
+     */
     protected runWrite(process: any, callback: (err: string) => void): any
     //------------------------------------------------------------------------------------------------------
     {

@@ -89,7 +89,7 @@ class Generator extends base_controller_1.BaseController {
         });
     }
     generateImagesFromRule(rule, callback) {
-        let image, process, original, target;
+        let image, process, original, target, fileName;
         if (rule.images.length < 1) {
             return callback(null);
         }
@@ -98,18 +98,30 @@ class Generator extends base_controller_1.BaseController {
         }
         image = rule.images.shift();
         original = path.join(this.configuration.directory, rule.sourceFile);
-        target = path.join(this.target, image.targetPath, image.fileName);
+        fileName = image.fileName;
+        if (image.replaceInTargetName && typeof image.replaceInTargetName === 'object') {
+            Object.keys(image.replaceInTargetName).forEach(search => {
+                let val = image.replaceInTargetName[search];
+                if (typeof val === 'string') {
+                    fileName = fileName.replace(search, val);
+                }
+            });
+        }
+        target = path.join(this.target, image.targetPath, fileName);
         if (!sb_util_ts_1.stringIsEmpty(rule._targetVar)) {
             target = target.replace('{source}', rule._targetVar);
         }
-        process = new ImageProcess({
+        this.generateImageWithOptions({
             original: original,
             target: target,
             size: image.size,
             noCrop: image.noCrop,
             fillColor: image.fillColor,
             colorize: image.colorize
-        });
+        }, rule, callback);
+    }
+    generateImageWithOptions(options, rule, callback) {
+        let process = new ImageProcess(options);
         process.run(err => {
             if (err) {
                 return callback(err);

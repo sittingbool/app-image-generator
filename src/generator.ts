@@ -196,7 +196,7 @@ export class Generator extends BaseController
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
-        let image: IImageFileConfig, process: ImageProcess, original, target, fileName;
+        let image: IImageFileConfig, original, target;
 
         if ( rule.images.length < 1 ) {
             return callback(null);
@@ -210,22 +210,13 @@ export class Generator extends BaseController
 
         original = path.join(this.configuration.directory, rule.sourceFile);
 
-        fileName = image.fileName;
-
-        if ( image.replaceInTargetName  && typeof image.replaceInTargetName === 'object' ) {
-            Object.keys(image.replaceInTargetName).forEach(search => {
-                let val = image.replaceInTargetName[search];
-                if ( typeof val === 'string' ) {
-                    fileName = fileName.replace(search, val);
-                }
-            });
-        }
-
-        target = path.join(this.target, image.targetPath, fileName);
+        target = path.join(this.target, image.targetPath, image.fileName);
 
         if ( !stringIsEmpty(rule._targetVar) ) {
             target = target.replace('{source}', rule._targetVar);
         }
+
+        target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
 
         this.generateImageWithOptions({
             original: original,
@@ -235,6 +226,31 @@ export class Generator extends BaseController
             fillColor: image.fillColor,
             colorize: image.colorize
         }, rule, callback);
+    }
+
+
+    //------------------------------------------------------------------------------------------------------
+    /**
+     * replaces an object of key value pairs into the target path name where the key is the current
+     * and the value is the new substring
+     * @param targetName - the string that the replacement should be done in
+     * @param replacements - the key - value - paring for the parts to replace
+     * @return {string} - the resulting string
+     */
+    protected applyReplacementsInTargetName(targetName:string,
+                                            replacements?: {[key: string]: string}): string
+    //------------------------------------------------------------------------------------------------------
+    {
+        if ( replacements  && typeof replacements === 'object' ) {
+            Object.keys(replacements).forEach(search => {
+                let val = replacements[search];
+                if ( typeof val === 'string' ) {
+                    targetName = targetName.replace(search, val);
+                }
+            });
+        }
+
+        return targetName;
     }
 
 
@@ -273,7 +289,7 @@ export class Generator extends BaseController
     {
         let sources = rule.sourceFiles, current, runner, images = rule.images;
 
-        rule.sourceFiles = null; // prevent cutting out in single source generation
+        rule.sourceFiles = null; // prevent opting out in single source generation
 
         runner = () => {
 

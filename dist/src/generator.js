@@ -89,7 +89,7 @@ class Generator extends base_controller_1.BaseController {
         });
     }
     generateImagesFromRule(rule, callback) {
-        let image, process, original, target, fileName;
+        let image, original, target;
         if (rule.images.length < 1) {
             return callback(null);
         }
@@ -98,19 +98,11 @@ class Generator extends base_controller_1.BaseController {
         }
         image = rule.images.shift();
         original = path.join(this.configuration.directory, rule.sourceFile);
-        fileName = image.fileName;
-        if (image.replaceInTargetName && typeof image.replaceInTargetName === 'object') {
-            Object.keys(image.replaceInTargetName).forEach(search => {
-                let val = image.replaceInTargetName[search];
-                if (typeof val === 'string') {
-                    fileName = fileName.replace(search, val);
-                }
-            });
-        }
-        target = path.join(this.target, image.targetPath, fileName);
+        target = path.join(this.target, image.targetPath, image.fileName);
         if (!sb_util_ts_1.stringIsEmpty(rule._targetVar)) {
             target = target.replace('{source}', rule._targetVar);
         }
+        target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
         this.generateImageWithOptions({
             original: original,
             target: target,
@@ -119,6 +111,17 @@ class Generator extends base_controller_1.BaseController {
             fillColor: image.fillColor,
             colorize: image.colorize
         }, rule, callback);
+    }
+    applyReplacementsInTargetName(targetName, replacements) {
+        if (replacements && typeof replacements === 'object') {
+            Object.keys(replacements).forEach(search => {
+                let val = replacements[search];
+                if (typeof val === 'string') {
+                    targetName = targetName.replace(search, val);
+                }
+            });
+        }
+        return targetName;
     }
     generateImageWithOptions(options, rule, callback) {
         let process = new ImageProcess(options);

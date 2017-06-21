@@ -189,7 +189,37 @@ export class ImageProcess
                 return callback(null);
             }
 
+            if ( this.options.compose && typeof this.options.compose === 'object' ) {
+                return this.runCompose(process, callback);
+            }
+
             this.runWrite( process, callback);
+        });
+    }
+
+
+
+
+    //------------------------------------------------------------------------------------------------------
+    /**
+     * performs the compose process
+     * @param process - gm process that was defined before
+     * @return {any} - altered gm process
+     * @param callback - default callback
+     */
+    protected runCompose(process: any, callback: (err: string) => void): any
+    //------------------------------------------------------------------------------------------------------
+    {
+        this.runWrite( process, err => { // needs to be written first
+            if (err) {
+                callback(err);
+            }
+
+            process = gm(this.options.target);
+
+            process = this.compose(process, this.options.compose);
+
+            this.runWrite(process, callback);
         });
     }
 
@@ -240,7 +270,6 @@ export class ImageProcess
         }
 
         if ( this.options.compose && typeof this.options.compose === 'object' ) {
-            process = this.compose(process, this.options.compose);
             this.optionalsUsed = true;
         }
 
@@ -255,7 +284,7 @@ export class ImageProcess
      * @param options - IComposeOptions for this composition
      * @return {any} - altered gm process
      */
-    compose(process: any, options: IComposeOptions): any
+    protected compose(process: any, options: IComposeOptions): any
     //------------------------------------------------------------------------------------------------------
     {
         let geometry = "", composePath;
@@ -303,18 +332,13 @@ export class ImageProcess
      * executes write to file
      * @param process - gm process that was defined before and should be executed
      * @param callback - default callback
-     * @param updateContentFiles - if set o true the Contents.json will be created here
      */
-    protected runWrite(process: any, callback: (err: string) => void, updateContentFiles = false): any
+    protected runWrite(process: any, callback: (err: string) => void): any
     //------------------------------------------------------------------------------------------------------
     {
         process.write( this.options.target, function (err) {
             if ( err ) {
                 return callback(err.message);
-            }
-
-            if ( updateContentFiles ) {
-
             }
 
             callback(null);

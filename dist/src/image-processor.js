@@ -94,6 +94,19 @@ class ImageProcess {
             if (!this.optionalsUsed) {
                 return callback(null);
             }
+            if (this.options.compose && typeof this.options.compose === 'object') {
+                return this.runCompose(process, callback);
+            }
+            this.runWrite(process, callback);
+        });
+    }
+    runCompose(process, callback) {
+        this.runWrite(process, err => {
+            if (err) {
+                callback(err);
+            }
+            process = gm(this.options.target);
+            process = this.compose(process, this.options.compose);
             this.runWrite(process, callback);
         });
     }
@@ -120,7 +133,6 @@ class ImageProcess {
             }
         }
         if (this.options.compose && typeof this.options.compose === 'object') {
-            process = this.compose(process, this.options.compose);
             this.optionalsUsed = true;
         }
         return process;
@@ -154,12 +166,10 @@ class ImageProcess {
         }
         return process;
     }
-    runWrite(process, callback, updateContentFiles = false) {
+    runWrite(process, callback) {
         process.write(this.options.target, function (err) {
             if (err) {
                 return callback(err.message);
-            }
-            if (updateContentFiles) {
             }
             callback(null);
         });

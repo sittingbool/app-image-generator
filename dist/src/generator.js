@@ -79,7 +79,7 @@ class Generator extends base_controller_1.BaseController {
         original = path.join(this.configuration.directory, rule.sourceFile);
         target = path.join(this.target, image.targetPath, image.fileName);
         if (!sb_util_ts_1.stringIsEmpty(rule._targetVar)) {
-            target = target.replace('{source}', rule._targetVar);
+            target = target.replace(/{source}/ig, rule._targetVar);
         }
         target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
         contentsJsonConfig = image.createContentsJson || rule.createContentsJson;

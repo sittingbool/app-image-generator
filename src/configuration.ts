@@ -7,15 +7,26 @@ import {BaseController} from "./base-controller";
 
 
 //----------------------------------------------------------------------------------------------------------
-export type ComposeLevel = 'top' | 'below';
+export type TComposeLevel = 'top' | 'below';
 export interface IComposeOptions
 //----------------------------------------------------------------------------------------------------------
 {
     composeImage: string;
-    topOrBelow: ComposeLevel;
+    topOrBelow: TComposeLevel;
     size?: string;
     offsetX?: number;
     offsetY?: number;
+}
+
+
+//----------------------------------------------------------------------------------------------------------
+export type TDeviceIdiom = 'iphone' | 'ipad' | 'universal';
+export type TiOSImageScale = '1x' | '2x' | '3x';
+export interface IContentsJSONConfig
+//----------------------------------------------------------------------------------------------------------
+{
+    idiom:TDeviceIdiom;
+    scale: TiOSImageScale;
 }
 
 
@@ -27,6 +38,8 @@ export interface IImageFileConfig
     targetPath: string;
     size: string;
     noCrop?: boolean; // prevents image from being cropped
+
+    createContentsJson?: IContentsJSONConfig;
 
     colorize?: string; // define a color that should be rendered into the picture as a hex-value
     fillColor?: string; // define a color that should be filled onto the picture as a hex-value
@@ -42,7 +55,7 @@ export interface IGeneratorConfig
 //----------------------------------------------------------------------------------------------------------
 {
     rootPath?: string;
-    createContentsJson?: boolean; // if set to yes a contents.json like needed in ios will be created
+    createContentsJson?: IContentsJSONConfig; // if set to an object a contents.json like needed in ios will be created
 }
 
 
@@ -53,7 +66,9 @@ export interface IGeneratorRule
     name?: string;
     sourceFile?: string; // absolute or relative path
     sourceFiles?: string [];
-    images: IImageFileConfig[]
+    images: IImageFileConfig[];
+
+    createContentsJson?: IContentsJSONConfig;
 
     _targetVar?: string; //used internally to replace wildcard parameters with the source file name
 }

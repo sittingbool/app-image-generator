@@ -1,17 +1,24 @@
 import { BaseController } from "./base-controller";
-export declare type ComposeLevel = 'top' | 'below';
+export declare type TComposeLevel = 'top' | 'below';
 export interface IComposeOptions {
     composeImage: string;
-    topOrBelow: ComposeLevel;
+    topOrBelow: TComposeLevel;
     size?: string;
     offsetX?: number;
     offsetY?: number;
+}
+export declare type TDeviceIdiom = 'iphone' | 'ipad' | 'universal';
+export declare type TiOSImageScale = '1x' | '2x' | '3x';
+export interface IContentsJSONConfig {
+    idiom: TDeviceIdiom;
+    scale: TiOSImageScale;
 }
 export interface IImageFileConfig {
     fileName: string;
     targetPath: string;
     size: string;
     noCrop?: boolean;
+    createContentsJson?: IContentsJSONConfig;
     colorize?: string;
     fillColor?: string;
     compose?: IComposeOptions;
@@ -21,13 +28,14 @@ export interface IImageFileConfig {
 }
 export interface IGeneratorConfig {
     rootPath?: string;
-    createContentsJson?: boolean;
+    createContentsJson?: IContentsJSONConfig;
 }
 export interface IGeneratorRule {
     name?: string;
     sourceFile?: string;
     sourceFiles?: string[];
     images: IImageFileConfig[];
+    createContentsJson?: IContentsJSONConfig;
     _targetVar?: string;
 }
 export declare class GeneratorRule implements IGeneratorRule {

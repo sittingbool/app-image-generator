@@ -126,6 +126,29 @@
           "size": "50x50"
         }
       ]
+    },
+    "flower2-ios": {
+      "sourceFile": "fl_landscape.jpg",
+      "createContentsJson": {
+        "idiom": "iphone",
+        "scale": "2x"
+      },
+      "images": [
+        {
+          "fileName": "Icon-40@2x.png",
+          "targetPath": "test/ios-icon",
+          "size": "80x80"
+        },
+        {
+          "fileName": "Icon-40.png",
+          "targetPath": "test/ios-icon",
+          "size": "40x40",
+          "createContentsJson": {
+            "idiom": "universal",
+            "scale": "1x"
+          }
+        }
+      ]
     }
   }
 }

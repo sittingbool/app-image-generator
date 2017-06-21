@@ -1,6 +1,6 @@
 {
 	"name": "app-image-generator",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "",
 	"repository": {
 		"type": "git",
@@ -41,6 +41,8 @@
 	"devDependencies": {
 		"@types/chai": "^4.0.0",
 		"@types/commander": "^2.3.31",
+		"@types/gm": "^1.17.31",
+		"@types/lodash": "^4.14.66",
 		"@types/mocha": "^2.2.39",
 		"@types/node": "^7.0.5",
 		"@types/sinon": "^2.3.0",

@@ -159,7 +159,7 @@ export class Generator extends BaseController
         target = path.join(this.target, image.targetPath, image.fileName);
 
         if ( !stringIsEmpty(rule._targetVar) ) {
-            target = target.replace('{source}', rule._targetVar);
+            target = target.replace(/{source}/ig, rule._targetVar);
         }
 
         target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);

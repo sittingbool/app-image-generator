@@ -1,4 +1,5 @@
 import { IComposeOptions, IContentsJSONConfig } from "./configuration";
+import { ContentsFileUpdater } from "./contents-json-updater";
 export interface IImageProcessOptions {
     original: string;
     target: string;
@@ -14,7 +15,7 @@ export declare class ImageProcess {
     width: number;
     height: number;
     optionalsUsed: boolean;
-    constructor(options: IImageProcessOptions);
+    constructor(options: IImageProcessOptions, contentsJsonUpdater?: ContentsFileUpdater);
     run(callback: (err: string) => void): void;
     protected runWithCrop(callback: (err: string) => void): void;
     protected runWithOutCrop(callback: (err: string) => void): void;

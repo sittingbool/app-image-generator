@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------------
-import {Configuration, IGeneratorRule, IImageFileConfig} from "./configuration";
+import {Configuration, IContentsJSONConfig, IGeneratorRule, IImageFileConfig} from "./configuration";
 import {IImageProcessOptions, ImageProcess} from "./image-processor";
 import {ContentsFileUpdater} from "./contents-json-updater";
 import {stringIsEmpty} from "sb-util-ts";
@@ -118,6 +118,7 @@ export class Generator extends BaseController
         let rule: IGeneratorRule;
 
         if ( this.rules.length < 1 ) {
+            this.contentFileUpdater.run();
             return callback(null);
         }
 
@@ -141,7 +142,7 @@ export class Generator extends BaseController
     generateImagesFromRule(rule: IGeneratorRule, callback: (err: string) => void)
     //------------------------------------------------------------------------------------------------------
     {
-        let image: IImageFileConfig, original, target;
+        let image: IImageFileConfig, original, target, contentsJsonConfig: IContentsJSONConfig;
 
         if ( rule.images.length < 1 ) {
             return callback(null);
@@ -162,6 +163,13 @@ export class Generator extends BaseController
         }
 
         target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
+
+        contentsJsonConfig = image.createContentsJson || rule.createContentsJson;
+
+        if ( contentsJsonConfig ) {
+            this.contentFileUpdater.addDirectory(path.dirname(target));
+            this.contentFileUpdater.addConfigForFile(target, contentsJsonConfig);
+        }
 
         this.generateImageWithOptions({
             original: original,

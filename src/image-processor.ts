@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------------------------------------------
 import {IComposeOptions, IContentsJSONConfig} from "./configuration";
+import {ContentsFileUpdater} from "./contents-json-updater";
 import {arrayIsEmpty, stringIsEmpty} from "sb-util-ts";
 import * as path from "path";
 import * as fs from "fs";
@@ -38,7 +39,7 @@ export class ImageProcess
 
 
     //------------------------------------------------------------------------------------------------------
-    constructor( options: IImageProcessOptions )
+    constructor( options: IImageProcessOptions, contentsJsonUpdater?: ContentsFileUpdater )
     //------------------------------------------------------------------------------------------------------
     {
         let sizing: string[];

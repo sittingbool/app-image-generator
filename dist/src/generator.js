@@ -56,6 +56,7 @@ class Generator extends base_controller_1.BaseController {
     generate(callback) {
         let rule;
         if (this.rules.length < 1) {
+            this.contentFileUpdater.run();
             return callback(null);
         }
         rule = this.rules.shift();
@@ -67,7 +68,7 @@ class Generator extends base_controller_1.BaseController {
         });
     }
     generateImagesFromRule(rule, callback) {
-        let image, original, target;
+        let image, original, target, contentsJsonConfig;
         if (rule.images.length < 1) {
             return callback(null);
         }
@@ -81,6 +82,11 @@ class Generator extends base_controller_1.BaseController {
             target = target.replace('{source}', rule._targetVar);
         }
         target = this.applyReplacementsInTargetName(target, image.replaceInTargetName);
+        contentsJsonConfig = image.createContentsJson || rule.createContentsJson;
+        if (contentsJsonConfig) {
+            this.contentFileUpdater.addDirectory(path.dirname(target));
+            this.contentFileUpdater.addConfigForFile(target, contentsJsonConfig);
+        }
         this.generateImageWithOptions({
             original: original,
             target: target,

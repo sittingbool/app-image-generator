@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------------
-import {IComposeOptions, IGeneratorRule, IImageFileConfig} from "./configuration";
+import {IComposeOptions, IContentsJSONConfig, IGeneratorRule, IImageFileConfig} from "./configuration";
 import {stringIsEmpty} from "sb-util-ts";
 //----------------------------------------------------------------------------------------------------------
 
@@ -25,12 +25,23 @@ export class Validator
     static ruleIsValid(rule: IGeneratorRule): boolean
     //------------------------------------------------------------------------------------------------------
     {
-        return ( rule && typeof rule === 'object' &&
+        let valid = ( rule && typeof rule === 'object' &&
         (
             !stringIsEmpty(<string>rule.sourceFile) ||
             ( Array.isArray(rule.sourceFiles) && rule.sourceFiles.length )
         ) &&
         Array.isArray(rule.images) && rule.images.length > 0 && this.ruleImagesAreValid(rule.images) );
+
+        if ( valid && rule.createContentsJson && typeof rule.createContentsJson === 'object' ) {
+            valid = this.contentsJsonConfigIsValid(rule.createContentsJson);
+
+            if( !valid ) {
+                console.log('The definition of createContentsJson on your rule regarding ' +
+                    ( rule.sourceFile || rule.sourceFiles[0] || rule.name) + ' is invalid');
+            }
+        }
+
+        return valid;
     }
 
 
@@ -78,6 +89,28 @@ export class Validator
                 (image.targetPath || 'name missing' ) + '"' );
         }
 
+        if ( valid && image.createContentsJson && typeof image.createContentsJson === 'object' ) {
+            valid = this.contentsJsonConfigIsValid(image.createContentsJson);
+
+            if( !valid ) {
+                console.log('The definition of createContentsJson on your image definition targeting ' +
+                    ( image.targetPath || '(unknown)' ) + ' is invalid');
+            }
+        }
+
         return valid;
+    }
+
+
+    //------------------------------------------------------------------------------------------------------
+    static contentsJsonConfigIsValid( config: IContentsJSONConfig): boolean
+    //------------------------------------------------------------------------------------------------------
+    {
+        return (
+            !stringIsEmpty(config.idiom) &&
+            ['iphone', 'ipad', 'universal' ].indexOf(config.idiom) >= 0 &&
+            !stringIsEmpty(config.scale) &&
+            ['1x', '2x', '3x' ].indexOf(config.scale) >= 0
+        );
     }
 }

@@ -8,7 +8,7 @@ const mkdirp = require("mkdirp");
 const _ = require("lodash");
 const hex2rgb = require("hex-rgb");
 class ImageProcess {
-    constructor(options) {
+    constructor(options, contentsJsonUpdater) {
         this.options = null;
         this.optionalsUsed = false;
         let sizing;

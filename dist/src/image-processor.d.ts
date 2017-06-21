@@ -20,8 +20,9 @@ export declare class ImageProcess {
     protected runWithCrop(callback: (err: string) => void): void;
     protected runWithOutCrop(callback: (err: string) => void): void;
     protected runDefaults(process: any, callback: (err: string) => void): void;
+    protected runCompose(process: any, callback: (err: string) => void): any;
     protected runResize(process: any): any;
     protected runOptionals(process: any): any;
-    compose(process: any, options: IComposeOptions): any;
-    protected runWrite(process: any, callback: (err: string) => void, updateContentFiles?: boolean): any;
+    protected compose(process: any, options: IComposeOptions): any;
+    protected runWrite(process: any, callback: (err: string) => void): any;
 }
